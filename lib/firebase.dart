@@ -1,4 +1,8 @@
+import 'dart:io';
+
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 
 import 'database.dart';
 
@@ -15,6 +19,32 @@ class _FireBaseState extends State<FireBase> {
   TextEditingController passController = TextEditingController();
 
   String selectedDataKey = '';
+  FirebaseStorage storage = FirebaseStorage.instance;
+  String imageURL = '';
+
+  uploadImage() async {
+
+    ///Pick image from Gallery
+    final ImagePicker _picker = ImagePicker();
+    XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+
+    ///Create Folder and File
+    Reference reference = storage.ref().child("images/${DateTime.now().toString()}");
+
+    ///Upload Image
+    UploadTask uploadTask = reference.putFile(File(image!.path));
+
+    ///Set Url
+    await(await uploadTask).ref.getDownloadURL().then((value) {
+      print('===$value');
+      imageURL = value;
+    });
+
+    ///Insert Data to Realtime Firebase
+    setState(() {
+
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -64,10 +94,18 @@ class _FireBaseState extends State<FireBase> {
               const SizedBox(height: 10,),
               MaterialButton(
                   color: Colors.blue,
+                  onPressed:(){
+                    uploadImage();
+                  },
+                child:const Text('Upload Image',style: TextStyle(color: Colors.white),),
+              ),
+              MaterialButton(
+                  color: Colors.blue,
                   onPressed: () {
                     DataBase.insertData(
                       emailController.text,
                       passController.text,
+                      imageURL,
                     ).then((value) {
                       setState(() {});
                     });
@@ -85,7 +123,6 @@ class _FireBaseState extends State<FireBase> {
                     });
                   },
                   child:const Text('Update',style: TextStyle(color: Colors.white),)),
-              //MaterialButton(onPressed: () {}, child: Text('Delete')),
               MaterialButton(
                 color: Colors.blue,
                   onPressed: () {
@@ -99,6 +136,7 @@ class _FireBaseState extends State<FireBase> {
                 child: ListView.builder(
                   itemCount: DataBase.data.length,
                   itemBuilder: (context, index) => ListTile(
+                    leading: CircleAvatar(backgroundImage: NetworkImage(DataBase.data[index]['image']),),
                     onTap: () {
                       setState(() {
                         emailController.text = DataBase.data[index]['email'];
@@ -106,11 +144,10 @@ class _FireBaseState extends State<FireBase> {
                         selectedDataKey = DataBase.data[index]['key'];
                       });
                     },
-                    title: Text(
-                      DataBase.data[index]['email'],
+                    title: Text('Email : '+DataBase.data[index]['email'],
                       style:const TextStyle(color: Colors.red),
                     ),
-                    subtitle: Text(DataBase.data[index]['pass']),
+                    subtitle: Text('Pass : '+DataBase.data[index]['pass']),
                     trailing: IconButton(
                       onPressed: () {
                         DataBase.deleteData(DataBase.data[index]['key']);

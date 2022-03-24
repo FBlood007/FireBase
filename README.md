@@ -1,7 +1,6 @@
 # Firebase
 
-<img src="FireBase Images/image1.png" width="200">   
-<img src="FireBase Images/image2.png" width="200"><br>
+<img src="FireBase Images/image1.png" width="200"> <img src="FireBase Images/image2.png" width="200">
 
 ## Getting Started
 
